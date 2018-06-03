@@ -62,7 +62,11 @@ def twoPlanetsDistance(planet1, planet2, dt, sidereal=True):
 	diff = p1_x - p2_x
 	angle = min(abs(diff),360-abs(diff)) #calculate angle between planets' positions
 	dist, asp_i = min((abs(angle-ASPECTS[i]),i) for i in range(len(ASPECTS))) #planets' distance from their closest aspect and which aspect
-	return dist, ASPECTS[asp_i], p1_x, p2_x, p1_v, p2_v
+	aspect = ASPECTS[asp_i]
+	p1_ahead = round((p2_x+angle)%360,2) == round(p1_x,2) #p1 is ahead when it is the planet that is further along in the zodiac given angle <= 180° between p1 & p2
+	perfecting = p1_ahead == ((angle > aspect and p2_v > p1_v) or (angle < aspect and p1_v > p2_v)) #if p1 is ahead, aspect is perfecting when this expression evaluates to true
+																									#the converse is true when p2 is ahead
+	return dist, ASPECTS[asp_i], p1_x, p2_x, p1_v, p2_v, perfecting
 
 
 ALPHA = 0.75 #keeps Moon aspects from being missed by the following function
@@ -76,7 +80,8 @@ def getNextAspect(planet1, planet2, dt, sidereal=True):
 	happens, the location of the two planets (degrees out of 360), and the aspect in number of degrees.
 
 	"""
-	dist, aspect, p1_x, p2_x, p1_v, p2_v = twoPlanetsDistance(planet1, planet2, dt, sidereal=sidereal)
+	retvals = twoPlanetsDistance(planet1, planet2, dt, sidereal=sidereal)
+	dist, aspect, p1_x, p2_x, p1_v, p2_v = retvals[:6]
 	if round(dist, 3) == 0: #aspect exact to ~1"
 		return dt, p1_x, p2_x, aspect
 	elif dist < abs(p1_v) or dist < abs(p2_v): #if aspect is less than a day from perfection
@@ -103,7 +108,8 @@ def getAllNextAspects(start_dt, n, sidereal=True):
 		for planet2 in PLANETSTR[i+1:]: #to avoid duplicate checks, second planet is always later in list
 			dt = start_dt
 			while dt <= end_dt:
-				dist, aspect, p1_x, p2_x, p1_v, p2_v = twoPlanetsDistance(planet1, planet2, dt, sidereal=sidereal)
+				retvals = twoPlanetsDistance(planet1, planet2, dt, sidereal=sidereal)
+				dist, aspect, p1_x, p2_x, p1_v, p2_v = retvals[:6]
 				if dist < abs(p1_v)*n or dist < abs(p2_v)*n: #if planets could maybe perfect aspect within n days
 					nextAspect = getNextAspect(planet1, planet2, dt, sidereal=sidereal)
 					if nextAspect[0] < end_dt: #check if next aspect is actually within time window
@@ -204,8 +210,7 @@ def printNextIngressAllPlanets(dt, sidereal=True):
 		print()
 
 
-def printPlanetPositions(dt, sidereal=True):
-	print('\nPlanetary positions for:',(dt+LOCALTIMEDIFF).strftime('%a %b %d %Y %X'),'\n')
+def printPlanetPositions(dt, orb, sidereal=True):
 	dt_tup = dt.timetuple()[:6]
 	jt = swe.utc_to_jd(*dt_tup,swe.GREG_CAL)
 	planetpos = list(swe.calc_ut(jt[1], i, flag=int(sidereal)*swe.FLG_SIDEREAL+swe.FLG_SPEED) for i in range(len(PLANETSTR)))
@@ -214,28 +219,45 @@ def printPlanetPositions(dt, sidereal=True):
 	for i in range(len(PLANETSTR)):
 		print(PLANETSTR[i]+':',str(planetSigns[i][0])+'°',str(planetSigns[i][1])+"'"+\
 			str(planetSigns[i][2])+'"',SIGNSTR[planetSigns[i][4]],'   speed:',round(planetpos[i][3],3),'deg/day')
+	
+	print('\nAspects within '+str(orb)+'° orb:')
+	for i, planet1 in enumerate(PLANETSTR[:-1]): #the last planet will never be 1st in the pair
+		for planet2 in PLANETSTR[i+1:]: #to avoid duplicate checks, second planet is always later in list
+			dist, aspect, p1_x, p2_x, p1_v, p2_v, perfecting = twoPlanetsDistance(planet1, planet2, dt, sidereal=sidereal)
+			if round(dist, 2) <= orb:
+				distfloor = int(dist)
+				distsplit = (distfloor, int((dist-distfloor)*60))
+				p1_pos, p2_pos = swe.split_deg(p1_x, 8), swe.split_deg(p2_x, 8)
+				if perfecting:
+					perfectstr = 'perfecting'
+				else:
+					perfectstr = 'separating'
+				print(planet1,'at',str(p1_pos[0])+'°',str(p1_pos[1])+"'"+str(p1_pos[2])+'"',SIGNSTR[p1_pos[4]],\
+					str(distsplit[0])+'°',str(distsplit[1])+"'",'from',ASPECTSTR[ASPECTS.index(aspect)],\
+					planet2,'at',str(p2_pos[0])+'°',str(p2_pos[1])+"'"+str(p2_pos[2])+'"',SIGNSTR[p2_pos[4]],'('+perfectstr+')')
 	print()
 
 
 def main(sidereal=True):
 
-	if input("Enter 'T' to switch to tropical zodiac: ").upper() == 'T':
+	if input("Enter 'Z' to switch to tropical zodiac: ").upper() == 'Z':
 		sidereal = False
 
 	now = datetime.utcnow()
-	nowtup = now.timetuple()[:6] # get year --> second values in a tuple
+	# nowtup = now.timetuple()[:6] # get year --> second values in a tuple
 
 	print()
 	print('Current time:',(now+LOCALTIMEDIFF).strftime('%a %b %d %Y %X'))
 	print()
-	jt = swe.utc_to_jd(*nowtup,swe.GREG_CAL)
-	planetpos = list(swe.calc_ut(jt[1], i, flag=int(sidereal)*swe.FLG_SIDEREAL+swe.FLG_SPEED) for i in range(len(PLANETSTR)))
-	planetSigns = list(swe.split_deg(planetpos[i][0],8) for i in range(len(planetpos)))
+	printPlanetPositions(now, 3, sidereal=sidereal)
+	# jt = swe.utc_to_jd(*nowtup,swe.GREG_CAL)
+	# planetpos = list(swe.calc_ut(jt[1], i, flag=int(sidereal)*swe.FLG_SIDEREAL+swe.FLG_SPEED) for i in range(len(PLANETSTR)))
+	# planetSigns = list(swe.split_deg(planetpos[i][0],8) for i in range(len(planetpos)))
 
-	for i in range(len(PLANETSTR)):
-		print(PLANETSTR[i]+':',str(planetSigns[i][0])+'°',str(planetSigns[i][1])+"'"+\
-			str(planetSigns[i][2])+'"',SIGNSTR[planetSigns[i][4]],'   speed:',round(planetpos[i][3],3),'deg/day')
-	print()
+	# for i in range(len(PLANETSTR)):
+	# 	print(PLANETSTR[i]+':',str(planetSigns[i][0])+'°',str(planetSigns[i][1])+"'"+\
+	# 		str(planetSigns[i][2])+'"',SIGNSTR[planetSigns[i][4]],'   speed:',round(planetpos[i][3],3),'deg/day')
+	# print()
 
 	print('Enter one of the following commands:')
 	print('T            n -- see all transits for the next n days (n is an integer); if n not provided, defaults to 3')
@@ -305,7 +327,8 @@ def main(sidereal=True):
 				printNextIngressAllPlanets(usedate, sidereal=sidereal)
 				continue
 			elif cmd == 'D':
-				printPlanetPositions(usedate, sidereal=sidereal)
+				print('\nPlanetary positions for:',(usedate+LOCALTIMEDIFF).strftime('%a %b %d %Y %X'),'\n')
+				printPlanetPositions(usedate, 3, sidereal=sidereal)
 
 
 
