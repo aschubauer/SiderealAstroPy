@@ -1,36 +1,4 @@
-import sys
-import time
-from datetime import datetime, timedelta
-import swisseph as swe
-
-swe.set_ephe_path('~/Projects/swe_unix_src_2.07.01') #set the filepath to your Swiss Ephemeris download
-swe.set_sid_mode(swe.SIDM_LAHIRI) #uses Hindu-Lahiri ayanamsa for sidereal zodiac
-
-SIGNSTR=('Aries', #0
-		'Taurus', #1
-		'Gemini', #2
-		'Cancer', #3
-		'Leo', #4
-		'Virgo', #5
-		'Libra', #6
-		'Scorpio', #7
-		'Sagittarius', #8
-		'Capricorn', #9
-		'Aquarius', #10
-		'Pisces') #11
-
-SIGNCUSPS=tuple(30*x for x in range(12)) #degree value of all sign cusps from 0° = 0° Aries to 330° = 0° Pisces
-
-PLANETSTR=('Sun', #0
-		'Moon', #1
-		'Mercury', #2
-		'Venus', #3
-		'Mars', #4
-		'Jupiter', #5
-		'Saturn') #6
-
-ASPECTS=(0,60,90,120,180)
-ASPECTSTR=('CONJUNCT','sextile','SQUARE','trine','OPPOSITE')
+from globalinit import *
 
 #LOCALTIMEDIFF = timedelta(hours = -4)
 """ The lines below get local time from a time format string (Python 3 only).
@@ -49,8 +17,8 @@ def twoPlanetsDistance(planet1, planet2, dt, sidereal=True):
 	Returns how close the planets are to aspect in degrees, the degree value of the closest aspect, and position
 	and speed of both planets from swe.calc_ut().
 	"""
-	p1_i = PLANETSTR.index(planet1)
-	p2_i = PLANETSTR.index(planet2)
+	p1_i = PLANETKEY.index(planet1)
+	p2_i = PLANETKEY.index(planet2)
 	timedifftup = dt.timetuple()[:6] #year, month, day, hour, minute, second
 	jt = swe.utc_to_jd(*timedifftup, swe.GREG_CAL) #convert to Julian time
 	p1_coord = swe.calc_ut(jt[1], p1_i, flag=int(sidereal)*swe.FLG_SIDEREAL+swe.FLG_SPEED) #get position of planet1
@@ -104,8 +72,8 @@ def getAllNextAspects(start_dt, n, sidereal=True):
 	"""
 	end_dt = start_dt + timedelta(days=n)
 	ASPECTS = []
-	for i, planet1 in enumerate(PLANETSTR[:-1]): #the last planet will never be 1st in the pair
-		for planet2 in PLANETSTR[i+1:]: #to avoid duplicate checks, second planet is always later in list
+	for i, planet1 in enumerate(PLANETKEY[:-1]): #the last planet will never be 1st in the pair
+		for planet2 in PLANETKEY[i+1:]: #to avoid duplicate checks, second planet is always later in list
 			dt = start_dt
 			while dt <= end_dt:
 				retvals = twoPlanetsDistance(planet1, planet2, dt, sidereal=sidereal)
@@ -127,7 +95,7 @@ def getNextIngress(planetName, dt, sidereal=True):
 	Returns the datetime and sign index of next ingress of planetName into a different sign, starting from dt.
 
 	"""
-	p_i = PLANETSTR.index(planetName)
+	p_i = PLANETKEY.index(planetName)
 	timedifftup = dt.timetuple()[:6] #year, month, day, hour, minute, second
 	jt = swe.utc_to_jd(*timedifftup, swe.GREG_CAL) #convert to Julian time
 	p_coord = swe.calc_ut(jt[1], p_i, flag=int(sidereal)*swe.FLG_SIDEREAL+swe.FLG_SPEED) #get location info for planet
@@ -160,7 +128,7 @@ def getNextIngress(planetName, dt, sidereal=True):
 			dist = sign_limits[0] - p_x 	#if retrograde, planet will ingress into earlier sign
 		if p_v > 0:
 			dist = sign_limits[1] - p_x 	#if direct, planet will ingress into later sign
-		#iters += 1	
+		#iters += 1
 		# if iters >= 200: <--- this is helpful for debugging
 		# 	print('Leaving loop for',planetName,'at pos',p_x,'dist',dist,'after 200 iterations')
 		# 	break
@@ -179,18 +147,18 @@ def printAllNextTransits(start_dt, n, sidereal=True):
 	ingressList = []
 
 	for idx, next_aspect in enumerate(aspectList):
-		p1_pos, p2_pos = (swe.split_deg(next_aspect[i],8) for i in range(1,3)) #split p1_x and p2_x into SIGNSTR, degrees
-		strfmt = ' '.join((next_aspect[4],'at',str(p1_pos[0])+'°',str(p1_pos[1])+"'"+str(p1_pos[2])+'"',SIGNSTR[p1_pos[4]],\
-				ASPECTSTR[ASPECTS.index(next_aspect[3])],\
-				next_aspect[5],'at',str(p2_pos[0])+'°',str(p2_pos[1])+"'"+str(p2_pos[2])+'"',SIGNSTR[p2_pos[4]]))
+		p1_pos, p2_pos = (swe.split_deg(next_aspect[i],8) for i in range(1,3)) #split p1_x and p2_x into SIGNKEY, degrees
+		strfmt = ' '.join((next_aspect[4],'at',str(p1_pos[0])+'°',str(p1_pos[1])+"'"+str(p1_pos[2])+'"',SIGNKEY[p1_pos[4]],\
+				ASPECTKEY[ASPECTS.index(next_aspect[3])],\
+				next_aspect[5],'at',str(p2_pos[0])+'°',str(p2_pos[1])+"'"+str(p2_pos[2])+'"',SIGNKEY[p2_pos[4]]))
 		# strfmt = 'balls'
 		aspectList[idx] = ((next_aspect[0],strfmt))
 
-	for planetName in PLANETSTR:
+	for planetName in PLANETKEY:
 		dt = start_dt
 		while dt < end_dt:
 			new_dt, next_sign_i = getNextIngress(planetName, dt, sidereal=sidereal)
-			strfmt = planetName+' ingresses into '+SIGNSTR[next_sign_i]
+			strfmt = planetName+' ingresses into '+SIGNKEY[next_sign_i]
 			if new_dt < end_dt:
 				ingressList.append((new_dt, strfmt))
 			dt = new_dt + timedelta(hours=1)
@@ -204,25 +172,26 @@ def printAllNextTransits(start_dt, n, sidereal=True):
 def printNextIngressAllPlanets(dt, sidereal=True):
 	print('Next ingress for all planets from',(dt+LOCALTIMEDIFF).strftime('%a %b %d %Y %X'),'–')
 	print()
-	for planet in PLANETSTR:
+	for planet in PLANETKEY:
 		new_dt, next_sign_i = getNextIngress(planet, dt, sidereal=sidereal)
-		print(planet,'ingresses into',SIGNSTR[next_sign_i],'on',(new_dt+LOCALTIMEDIFF).strftime('%a %b %d, %Y at %I:%M %p'),'ET')
+		print(planet,'ingresses into',SIGNKEY[next_sign_i],'on',(new_dt+LOCALTIMEDIFF).strftime('%a %b %d, %Y at %I:%M %p'),'ET')
 		print()
 
 
 def printPlanetPositions(dt, orb, sidereal=True):
 	dt_tup = dt.timetuple()[:6]
 	jt = swe.utc_to_jd(*dt_tup,swe.GREG_CAL)
-	planetpos = list(swe.calc_ut(jt[1], i, flag=int(sidereal)*swe.FLG_SIDEREAL+swe.FLG_SPEED) for i in range(len(PLANETSTR)))
+	planetpos = list(swe.calc_ut(jt[1], i, flag=int(sidereal)*swe.FLG_SIDEREAL+swe.FLG_SPEED) for i in range(len(PLANETKEY)))
 	planetSigns = list(swe.split_deg(planetpos[i][0],8) for i in range(len(planetpos)))
 
-	for i in range(len(PLANETSTR)):
-		print(PLANETSTR[i]+':',str(planetSigns[i][0])+'°',str(planetSigns[i][1])+"'"+\
-			str(planetSigns[i][2])+'"',SIGNSTR[planetSigns[i][4]],'   speed:',round(planetpos[i][3],3),'deg/day')
-	
+	for i in range(len(PLANETKEY)):
+		print(PLANETKEY[i]+':',str(planetSigns[i][0])+'°',str(planetSigns[i][1])+"'"+\
+			str(planetSigns[i][2])+'"',SIGNKEY[planetSigns[i][4]],'   speed:',round(planetpos[i][3],3),'deg/day')
+
+	perfectList = []
 	print('\nAspects within '+str(orb)+'° orb:')
-	for i, planet1 in enumerate(PLANETSTR[:-1]): #the last planet will never be 1st in the pair
-		for planet2 in PLANETSTR[i+1:]: #to avoid duplicate checks, second planet is always later in list
+	for i, planet1 in enumerate(PLANETKEY[:-1]): #the last planet will never be 1st in the pair
+		for planet2 in PLANETKEY[i+1:]: #to avoid duplicate checks, second planet is always later in list
 			dist, aspect, p1_x, p2_x, p1_v, p2_v, perfecting = twoPlanetsDistance(planet1, planet2, dt, sidereal=sidereal)
 			if round(dist, 2) <= orb:
 				distfloor = int(dist)
@@ -232,9 +201,12 @@ def printPlanetPositions(dt, orb, sidereal=True):
 					perfectstr = 'perfecting'
 				else:
 					perfectstr = 'separating'
-				print(planet1,'at',str(p1_pos[0])+'°',str(p1_pos[1])+"'"+str(p1_pos[2])+'"',SIGNSTR[p1_pos[4]],\
-					str(distsplit[0])+'°',str(distsplit[1])+"'",'from',ASPECTSTR[ASPECTS.index(aspect)],\
-					planet2,'at',str(p2_pos[0])+'°',str(p2_pos[1])+"'"+str(p2_pos[2])+'"',SIGNSTR[p2_pos[4]],'('+perfectstr+')')
+				perfectList.append((dist,planet1+' at '+str(p1_pos[0])+'° '+str(p1_pos[1])+"'"+str(p1_pos[2])+'" '+SIGNKEY[p1_pos[4]]+' '+
+					str(distsplit[0])+'° '+str(distsplit[1])+"'"+' from '+ASPECTKEY[ASPECTS.index(aspect)]+' '+
+					planet2+' at '+str(p2_pos[0])+'° '+str(p2_pos[1])+"'"+str(p2_pos[2])+'" '+SIGNKEY[p2_pos[4]]+' ('+perfectstr+')'))
+	perfectList.sort()
+	for dist, printstr in perfectList:
+		print(printstr)
 	print()
 
 
@@ -251,12 +223,12 @@ def main(sidereal=True):
 	print()
 	printPlanetPositions(now, 3, sidereal=sidereal)
 	# jt = swe.utc_to_jd(*nowtup,swe.GREG_CAL)
-	# planetpos = list(swe.calc_ut(jt[1], i, flag=int(sidereal)*swe.FLG_SIDEREAL+swe.FLG_SPEED) for i in range(len(PLANETSTR)))
+	# planetpos = list(swe.calc_ut(jt[1], i, flag=int(sidereal)*swe.FLG_SIDEREAL+swe.FLG_SPEED) for i in range(len(PLANETKEY)))
 	# planetSigns = list(swe.split_deg(planetpos[i][0],8) for i in range(len(planetpos)))
 
-	# for i in range(len(PLANETSTR)):
-	# 	print(PLANETSTR[i]+':',str(planetSigns[i][0])+'°',str(planetSigns[i][1])+"'"+\
-	# 		str(planetSigns[i][2])+'"',SIGNSTR[planetSigns[i][4]],'   speed:',round(planetpos[i][3],3),'deg/day')
+	# for i in range(len(PLANETKEY)):
+	# 	print(PLANETKEY[i]+':',str(planetSigns[i][0])+'°',str(planetSigns[i][1])+"'"+\
+	# 		str(planetSigns[i][2])+'"',SIGNKEY[planetSigns[i][4]],'   speed:',round(planetpos[i][3],3),'deg/day')
 	# print()
 
 	print('Enter one of the following commands:')
@@ -309,7 +281,7 @@ def main(sidereal=True):
 
 		if valid:
 			print()
-			
+
 			if ndays:
 				n = ndays
 			else:
