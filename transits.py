@@ -50,16 +50,17 @@ def getNextAspect(planet1, planet2, dt, sidereal=True):
 	"""
 	retvals = twoPlanetsDistance(planet1, planet2, dt, sidereal=sidereal)
 	dist, aspect, p1_x, p2_x, p1_v, p2_v = retvals[:6]
-	if round(dist, 3) == 0: #aspect exact to ~1"
-		return dt, p1_x, p2_x, aspect
-	elif dist < abs(p1_v) or dist < abs(p2_v): #if aspect is less than a day from perfection
-		delta_t = min((dist / abs(p2_v - p1_v)), (dist / abs(p1_v + p2_v))) #step forward a small amount of time
-		if planet1 == 'Moon' or planet2 == 'Moon': #decrease time step further to not skip over Moon aspect
-			delta_t *= ALPHA
-	else: #if more than a day from perfection, move forward one day -- can be optimized
-		delta_t = 1
-	dt += timedelta(days=delta_t)
-	return getNextAspect(planet1, planet2, dt, sidereal=sidereal)
+	while round(dist, 3) != 0:
+		if dist < abs(p1_v) or dist < abs(p2_v): #if aspect is less than a day from perfection
+			delta_t = min((dist / abs(p2_v - p1_v)), (dist / abs(p1_v + p2_v))) #step forward a small amount of time
+			if planet1 == 'Moon' or planet2 == 'Moon': #decrease time step further to not skip over Moon aspect
+				delta_t *= ALPHA
+		else:
+			delta_t = 1
+		dt += timedelta(days=delta_t)
+		retvals = twoPlanetsDistance(planet1, planet2, dt, sidereal=sidereal)
+		dist, aspect, p1_x, p2_x, p1_v, p2_v = retvals[:6]
+	return dt, p1_x, p2_x, aspect
 
 
 def getAllNextAspects(start_dt, n, sidereal=True):
@@ -90,12 +91,13 @@ def getAllNextAspects(start_dt, n, sidereal=True):
 	return sorted(ASPECTS)
 
 
-def getNextIngress(planetName, dt, sidereal=True):
+def getNextIngress(planetName, start_dt, sidereal=True):
 	"""
 	Returns the datetime and sign index of next ingress of planetName into a different sign, starting from dt.
 
 	"""
 	p_i = PLANETKEY.index(planetName)
+	dt = start_dt
 	timedifftup = dt.timetuple()[:6] #year, month, day, hour, minute, second
 	jt = swe.utc_to_jd(*timedifftup, swe.GREG_CAL) #convert to Julian time
 	p_coord = swe.calc_ut(jt[1], p_i, flag=int(sidereal)*swe.FLG_SIDEREAL+swe.FLG_SPEED) #get location info for planet
@@ -110,7 +112,7 @@ def getNextIngress(planetName, dt, sidereal=True):
 		dist = sign_limits[0] - p_x 	#dist is the distance between planet and cusp of sign it will ingress into
 	if p_v > 0:
 		dist = sign_limits[1] - p_x
-	#iters = 0 <--- used for debugging
+	# iters = 0 <--- used for debugging
 	while round(dist, 3) != 0:
 		if sign_limits[0] < p_x < sign_limits[1]: #if planet is within current sign, step forward in time
 			delta_t = abs(min(abs(sign_limits[i] - p_x) for i in range(3))/p_v)
@@ -118,7 +120,10 @@ def getNextIngress(planetName, dt, sidereal=True):
 			delta_t = -abs(min(abs(sign_limits[i] - p_x) for i in range(3))/p_v)
 		if abs(p_v) < 0.3: 				#if planet near station, p_v really small so delta_t needs to be reduced
 			delta_t *= abs(p_v) * 3		#these values work well for Mercury through Saturn
-		dt += timedelta(days=delta_t)	# move forward or backward in time a reasonable amount
+		if dt + timedelta(days=delta_t) > start_dt:
+			dt += timedelta(days=delta_t)	# move forward or backward in time a reasonable amount
+		else:
+			dt += timedelta(days=1)
 		timedifftup = dt.timetuple()[:6] #year, month, day, hour, minute, second
 		jt = swe.utc_to_jd(*timedifftup, swe.GREG_CAL) #convert to Julian time
 		p_coord = swe.calc_ut(jt[1], p_i, flag=int(sidereal)*swe.FLG_SIDEREAL+swe.FLG_SPEED) #get location info for planet
@@ -128,7 +133,7 @@ def getNextIngress(planetName, dt, sidereal=True):
 			dist = sign_limits[0] - p_x 	#if retrograde, planet will ingress into earlier sign
 		if p_v > 0:
 			dist = sign_limits[1] - p_x 	#if direct, planet will ingress into later sign
-		#iters += 1
+		# iters += 1
 		# if iters >= 200: <--- this is helpful for debugging
 		# 	print('Leaving loop for',planetName,'at pos',p_x,'dist',dist,'after 200 iterations')
 		# 	break
@@ -151,14 +156,13 @@ def printAllNextTransits(start_dt, n, sidereal=True):
 		strfmt = ' '.join((next_aspect[4],'at',str(p1_pos[0])+'°',str(p1_pos[1])+"'"+str(p1_pos[2])+'"',SIGNKEY[p1_pos[4]],\
 				ASPECTKEY[ASPECTS.index(next_aspect[3])],\
 				next_aspect[5],'at',str(p2_pos[0])+'°',str(p2_pos[1])+"'"+str(p2_pos[2])+'"',SIGNKEY[p2_pos[4]]))
-		# strfmt = 'balls'
 		aspectList[idx] = ((next_aspect[0],strfmt))
 
 	for planetName in PLANETKEY:
 		dt = start_dt
-		while dt < end_dt:
+		while start_dt <= dt <= end_dt:
 			new_dt, next_sign_i = getNextIngress(planetName, dt, sidereal=sidereal)
-			strfmt = planetName+' ingresses into '+SIGNKEY[next_sign_i]
+			strfmt = planetName+' ingresses '+SIGNKEY[next_sign_i]
 			if new_dt < end_dt:
 				ingressList.append((new_dt, strfmt))
 			dt = new_dt + timedelta(hours=1)
@@ -174,7 +178,7 @@ def printNextIngressAllPlanets(dt, sidereal=True):
 	print()
 	for planet in PLANETKEY:
 		new_dt, next_sign_i = getNextIngress(planet, dt, sidereal=sidereal)
-		print(planet,'ingresses into',SIGNKEY[next_sign_i],'on',(new_dt+LOCALTIMEDIFF).strftime('%a %b %d, %Y at %I:%M %p'),'ET')
+		print(planet,'ingresses',SIGNKEY[next_sign_i],'on',(new_dt+LOCALTIMEDIFF).strftime('%a %b %d, %Y at %I:%M %p'),'ET')
 		print()
 
 
