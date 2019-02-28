@@ -18,7 +18,7 @@ SIGNKEY=('Aries', #0
 		'Aquarius', #10
 		'Pisces') #11
 
-SIGNCUSPS=tuple(30*x for x in range(12)) #degree value of all sign cusps from 0° = 0° Aries to 330° = 0° Pisces
+SIGNCUSPS=tuple(30*x for x in range(12)) #degree value of all sign cusps from 0 = 0 deg Aries to 330 = 0 deg Pisces
 
 PLANETKEY=('Sun', #0
 		'Moon', #1
@@ -37,3 +37,6 @@ ASPECTKEY=('CONJUNCT','sextile','SQUARE','trine','OPPOSITE')
 
 ANGLEKEY = ('Ascendant','Midheaven','ARMC','vertex','equatorial ascendant',\
 			'co-ascendant (Koch)','co-ascendant (Munkasey)','polar ascendant (Munkasey)')
+
+ZR_PERIODS = {'Aries': 15, 'Taurus': 8, 'Gemini': 20, 'Cancer': 25, 'Leo': 19, 'Virgo': 20, 'Libra': 8, 'Scorpio': 15, 'Sagittarius': 12,
+				'Capricorn': 27, 'Aquarius': 30, 'Pisces': 12}
