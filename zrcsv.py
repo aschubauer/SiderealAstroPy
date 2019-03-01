@@ -16,8 +16,8 @@ while True:
     except:
         print("Invalid input. Please try again.")
         continue
-lat = int(input("Latitude of birth location: "))
-lng = int(input("Longitude of birth location: "))
+lat = float(input("Latitude of birth location: "))
+lng = float(input("Longitude of birth location: "))
 sid = input("Sidereal? (y/n): ") == "y"
 print()
 
@@ -42,10 +42,10 @@ if sid:
     savefile += "_sid"
 savefile += ".csv"
 with open(savefile, 'w', newline='') as csvfile:
-    fieldnames = ['Level','Start Date','Sign']
+    fieldnames = ['Level','Start Date','Sign','Note']
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
     writer.writeheader()
     for level in native.ZR[lot]:
-        writer.writerows([{'Level': level, 'Start Date': dt, 'Sign': sign} for dt, sign in native.ZR[lot][level]])
+        writer.writerows([{'Level': level, 'Start Date': dt, 'Sign': sign, 'Note': note} for dt, sign, note in native.ZR[lot][level]])
 
 print("File created successfully: "+savefile)

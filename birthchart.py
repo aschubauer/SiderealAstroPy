@@ -74,42 +74,52 @@ class Birthchart:
 		l2 = []
 		l3 = []
 		l4 = []
+		note1 = ""
 		while l1_start < enddt:
 			l1_period = ZR_PERIODS[l1_sign]
-			l1.append((l1_start, l1_sign))
+			l1.append((l1_start, l1_sign, note1))
 			l2_start = l1_start
 			l1_start += timedelta(days=360*l1_period)
 			l2_startsign = l2_sign = l1_sign
 			lb2 = False
+			note2 = ""
 			while l2_start < l1_start and l2_start < enddt:
 				l2_period = ZR_PERIODS[l2_sign]
-				l2.append((l2_start, l2_sign))
+				l2.append((l2_start, l2_sign, note2))
+				note2 = ""
 				l3_start = l2_start
 				l2_start += timedelta(days=30*l2_period)
 				l3_startsign = l3_sign = l2_sign
 				lb3 = False
+				note3 = ""
 				while l3_start < l2_start and l3_start < l1_start and l3_start < enddt:
 					l3_period = ZR_PERIODS[l3_sign]
-					l3.append((l3_start, l3_sign))
+					l3.append((l3_start, l3_sign, note3))
+					note3 = ""
 					l4_start = l3_start
 					l3_start += timedelta(days=2.5*l3_period)
 					l4_startsign = l4_sign = l3_sign
 					lb4 = False
+					note4 = ""
 					while l4_start < l3_start and l4_start < l2_start and l4_start < l1_start and l4_start < enddt:
 						l4_period = ZR_PERIODS[l4_sign]
-						l4.append((l4_start, l4_sign))
+						l4.append((l4_start, l4_sign, note4))
+						note4 = ""
 						l4_start += timedelta(hours=5*l4_period)
 						l4_sign = SIGNKEY[(SIGNKEY.index(l4_sign)+1) % 12]
 						if l4_sign == l4_startsign and not lb4:	#loosing of the bond
 							l4_sign = SIGNKEY[(SIGNKEY.index(l4_sign)+6) % 12]
 							lb4 = True
+							note4 = "LB"
 					l3_sign = SIGNKEY[(SIGNKEY.index(l3_sign)+1) % 12]
 					if l3_sign == l3_startsign and not lb3:	#loosing of the bond
 						l3_sign = SIGNKEY[(SIGNKEY.index(l3_sign)+6) % 12]
 						lb3 = True
+						note3 = "LB"
 				l2_sign = SIGNKEY[(SIGNKEY.index(l2_sign)+1) % 12]
 				if l2_sign == l2_startsign and not lb2:	#loosing of the bond
 					l2_sign = SIGNKEY[(SIGNKEY.index(l2_sign)+6) % 12]
 					lb2 = True
+					note2 = "LB"
 			l1_sign = SIGNKEY[(SIGNKEY.index(l1_sign)+1) % 12]
 		self.ZR[lotname] = {'L1': l1, 'L2': l2, 'L3': l3, 'L4': l4}
