@@ -5,4 +5,4 @@ Uses the pyswisseph library. You will need to both download the Swiss Ephemeris 
 
 When run, transits.py provides a simple command-line interface through which to interact with its functions.
 
-To run ZRCSV as an executable without installing Python/pyswisseph, download the dist/zrcsv directory and run the zrcsv file. This provides a command-line interface for generating zodiacal releasing periods over a 100-year lifetime as a .csv file. You will need to enter the chart owner's birth time in Universal Time and the latitude and longitude of their birth place.
+To run ZRCSV as an executable without installing Python or pyswisseph, download the dist/zrcsv directory and run the zrcsv file. This provides a command-line interface for generating zodiacal releasing periods over a 100-year lifetime as a .csv file. You will need to enter the chart owner's birth time in Universal Time and the latitude and longitude of their birth place.
