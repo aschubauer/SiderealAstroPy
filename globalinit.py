@@ -2,7 +2,9 @@ import swisseph as swe
 import time
 from datetime import datetime, timedelta
 
-swe.set_ephe_path('~/Projects/swe_unix_src_2.07.01') #set the filepath to your Swiss Ephemeris download
+from my_ephe_path import EPHE_PATH
+
+swe.set_ephe_path(EPHE_PATH) #set the filepath to your Swiss Ephemeris download
 swe.set_sid_mode(swe.SIDM_LAHIRI) #uses Hindu-Lahiri ayanamsa for sidereal zodiac
 
 SIGNKEY=('Aries', #0
