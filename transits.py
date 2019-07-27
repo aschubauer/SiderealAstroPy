@@ -1,3 +1,4 @@
+# coding: utf-8
 from globalinit import *
 
 #LOCALTIMEDIFF = timedelta(hours = -4)

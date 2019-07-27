@@ -1,3 +1,4 @@
+# coding: utf-8
 import os, csv, datetime, pickle
 
 from birthchart import Birthchart
