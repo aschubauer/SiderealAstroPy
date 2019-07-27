@@ -2,8 +2,8 @@ import os, csv, datetime, pickle
 
 from birthchart import Birthchart
 
-OUTPUT_DIR = "Charts/"
-SAVED_FILEPATH = "saved_charts.pck"
+OUTPUT_DIR = "Zodiacal Releasing/"
+SAVED_FILEPATH = OUTPUT_DIR+"zr-profiles.pck"
 
 def getSavedProfiles():
     try:
