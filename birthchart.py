@@ -5,8 +5,9 @@ class Birthchart:
 	def __init__(self, name, dt, lat, lng, hsys='W', sidereal=True):
 		""" Birthchart constructor: name (string), datetime object (UT), latitude, longitude, 
 			house system for house cusps, sidereal mode (default) """
-		self.chartOwner = name
+		self.name = name
 		self.birthTime = dt
+		self.lat, self.lng, self.sid = lat, lng, sidereal
 		timedifftup = dt.timetuple()[:6] #year, month, day, hour, minute, second
 		jt = swe.utc_to_jd(*timedifftup, swe.GREG_CAL) #convert to Julian time
 		planetpos = [swe.calc_ut(jt[1], i, flag=int(sidereal)*swe.FLG_SIDEREAL) for i in range(len(PLANETKEY))]
@@ -16,6 +17,7 @@ class Birthchart:
 		self.angles = {angleName: (angledegs[i], swe.split_deg(angledegs[i],8)) for i, angleName in enumerate(ANGLEKEY)}
 		self.sect = 'Day' if (self.angles['Ascendant'][0] - self.planets['Sun'][0][0]) % 360 <= 180 else 'Night'
 		self.lots = {}
+		self.ZR = {}
 
 
 	def calculateLots(self):
@@ -33,11 +35,11 @@ class Birthchart:
 								else (asc + self.planets['Venus'][0][0] - self.planets['Moon'][0][0]) % 360,
 					'Siblings': (asc + self.planets['Saturn'][0][0] - self.planets['Jupiter'][0][0]) % 360 if self.sect == 'Day' \
 								else (asc + self.planets['Jupiter'][0][0] - self.planets['Saturn'][0][0]) % 360,
-					'Wedding (men)': (asc + self.planets['Venus'][0][0] - self.planets['Saturn'][0][0]) % 360 if self.sect == 'Day' \
+					'Wedding_M': (asc + self.planets['Venus'][0][0] - self.planets['Saturn'][0][0]) % 360 if self.sect == 'Day' \
 								else (asc + self.planets['Saturn'][0][0] - self.planets['Venus'][0][0]) % 360,
-					'Wedding (women)': (asc + self.planets['Saturn'][0][0] - self.planets['Venus'][0][0]) % 360 if self.sect == 'Day' \
+					'Wedding_F': (asc + self.planets['Saturn'][0][0] - self.planets['Venus'][0][0]) % 360 if self.sect == 'Day' \
 								else (asc + self.planets['Venus'][0][0] - self.planets['Saturn'][0][0]) % 360,
-					'Pleasure & wedding': (asc + self.houseCusps[6][0] - self.planets['Venus'][0][0]) % 360 }
+					'Pleasure_and_wedding': (asc + self.houseCusps[6][0] - self.planets['Venus'][0][0]) % 360 }
 		self.lots['Eros_Valens'] = (asc + self.lots['Spirit'] - self.lots['Fortune']) % 360 if self.sect == 'Day' \
 							else (asc + self.lots['Fortune'] - self.lots['Spirit']) % 360
 		self.lots['Necessity_Valens'] = (asc + self.lots['Fortune'] - self.lots['Spirit']) % 360 if self.sect == 'Day' \
@@ -57,10 +59,13 @@ class Birthchart:
 		self.lots['Assets'] = (asc + self.houseCusps[1][0] - self.planets[house2ruler][0][0]) % 360
 
 		for lot in self.lots:
-			self.lots[lot] = (self.lots[lot], swe.split_deg(self.lots[lot],8))
+			split_deg = swe.split_deg(self.lots[lot],8)
+			self.lots[lot] = { 'exact': self.lots[lot], 
+								'deg': split_deg[0],
+								'min': split_deg[1],
+								'sec': split_deg[2],
+								'sign': SIGNKEY[split_deg[4]] }
 		
-		self.ZR = {}
-
 
 	def calculateZR(self, lotname, maxage=100):
 		""" calculates all zodiacal releasing periods and subperiods (L1 = longest to L4 = shortest)
@@ -69,7 +74,7 @@ class Birthchart:
 			self.calculateLots()
 		enddt = self.birthTime + timedelta(days=365.25*maxage)
 		l1_start = self.birthTime
-		l1_sign = SIGNKEY[self.lots[lotname][1][4]]
+		l1_sign = self.lots[lotname]['sign']
 		l1 = []
 		l2 = []
 		l3 = []
