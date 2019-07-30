@@ -28,19 +28,40 @@ class Birthchart:
 								else (asc + self.planets['Sun'][0][0] - self.planets['Moon'][0][0]) % 360,
 					'Spirit': (asc + self.planets['Sun'][0][0] - self.planets['Moon'][0][0]) % 360 if self.sect == 'Day' \
 								else (asc + self.planets['Moon'][0][0] - self.planets['Sun'][0][0]) % 360,
-					'Father1': (asc + self.planets['Saturn'][0][0] - self.planets['Sun'][0][0]) % 360 if self.sect == 'Day' \
+
+					'Father': (asc + self.planets['Saturn'][0][0] - self.planets['Sun'][0][0]) % 360 if self.sect == 'Day' \
 								else (asc + self.planets['Sun'][0][0] - self.planets['Saturn'][0][0]) % 360,
-					'Father2': (asc + self.planets['Jupiter'][0][0] - self.planets['Mars'][0][0]) % 360 if self.sect == 'Day' \
-								else (asc + self.planets['Mars'][0][0] - self.planets['Jupiter'][0][0]) % 360,
+					'Father_alt': (asc + self.planets['Jupiter'][0][0] - self.planets['Mars'][0][0]) % 360,
 					'Mother': (asc + self.planets['Moon'][0][0] - self.planets['Venus'][0][0]) % 360 if self.sect == 'Day' \
 								else (asc + self.planets['Venus'][0][0] - self.planets['Moon'][0][0]) % 360,
-					'Siblings': (asc + self.planets['Saturn'][0][0] - self.planets['Jupiter'][0][0]) % 360 if self.sect == 'Day' \
-								else (asc + self.planets['Jupiter'][0][0] - self.planets['Saturn'][0][0]) % 360,
-					'Wedding_M': (asc + self.planets['Venus'][0][0] - self.planets['Saturn'][0][0]) % 360 if self.sect == 'Day' \
+					'Siblings_Valens': (asc + self.planets['Jupiter'][0][0] - self.planets['Saturn'][0][0]) % 360 if self.sect == 'Day' \
+								else (asc + self.planets['Saturn'][0][0] - self.planets['Jupiter'][0][0]) % 360,
+					'Siblings_Paulus': (asc + self.planets['Jupiter'][0][0] - self.planets['Saturn'][0][0]) % 360,
+
+					'Marriage_Firmicus': (asc + self.planets['Venus'][0][0] - self.planets['Saturn'][0][0]) % 360 if self.sect == 'Day' \
 								else (asc + self.planets['Saturn'][0][0] - self.planets['Venus'][0][0]) % 360,
-					'Wedding_F': (asc + self.planets['Saturn'][0][0] - self.planets['Venus'][0][0]) % 360 if self.sect == 'Day' \
-								else (asc + self.planets['Venus'][0][0] - self.planets['Saturn'][0][0]) % 360,
-					'Pleasure_and_wedding': (asc + self.houseCusps[6][0] - self.planets['Venus'][0][0]) % 360 }
+					'Husband_Firmicus': (asc + self.planets['Venus'][0][0] - self.planets['Mars'][0][0]) % 360 if self.sect == 'Day' \
+								else (asc + self.planets['Mars'][0][0] - self.planets['Venus'][0][0]) % 360,
+					'Marriage_M_Paulus': (asc + self.planets['Venus'][0][0] - self.planets['Saturn'][0][0]) % 360,
+					'Marriage_F_Paulus': (asc + self.planets['Saturn'][0][0] - self.planets['Venus'][0][0]) % 360,
+					'Marriage_Valens': (asc + self.planets['Venus'][0][0] - self.planets['Jupiter'][0][0]) % 360 if self.sect == 'Day' \
+								else (asc + self.planets['Jupiter'][0][0] - self.planets['Venus'][0][0]) % 360,
+					'Marriage_M_Valens': (asc + self.planets['Venus'][0][0] - self.planets['Sun'][0][0]) % 360,
+					'Marriage_F_Valens': (asc + self.planets['Mars'][0][0] - self.planets['Moon'][0][0]) % 360,
+					'Pleasure_and_wedding': (asc + self.houseCusps[6][0] - self.planets['Venus'][0][0]) % 360,
+					'Wedding_M': (self.planets['Venus'][0][0] + self.planets['Moon'][0][0] - self.planets['Sun'][0][0]) % 360,
+					'Wedding_F': (self.planets['Mars'][0][0] + self.planets['Moon'][0][0] - self.planets['Sun'][0][0]) % 360,
+					
+					'Children_Paulus': (asc + self.planets['Saturn'][0][0] - self.planets['Jupiter'][0][0]) % 360,
+					'Children_Valens_M': (asc + self.planets['Mercury'][0][0] - self.planets['Jupiter'][0][0]) % 360,
+					'Children_Valens_F': (asc + self.planets['Venus'][0][0] - self.planets['Jupiter'][0][0]) % 360,
+
+					'Friendship': (asc + self.planets['Mercury'][0][0] - self.planets['Moon'][0][0]) % 360,
+					# Exaltation: from Sun to Aries = 0.0 - Sun; from Moon to Taurus = 30.0 - Moon
+					'Exaltation': (asc - self.planets['Sun'][0][0]) % 360 if self.sect == 'Day' \
+								else (asc + 30.0 - self.planets['Moon'][0][0])
+					 }
+		self.lots['Foundation'] = (asc + min(abs(self.lots['Spirit'] - self.lots['Fortune']), abs(self.lots['Fortune'] - self.lots['Spirit']))) % 360
 		self.lots['Eros_Valens'] = (asc + self.lots['Spirit'] - self.lots['Fortune']) % 360 if self.sect == 'Day' \
 							else (asc + self.lots['Fortune'] - self.lots['Spirit']) % 360
 		self.lots['Necessity_Valens'] = (asc + self.lots['Fortune'] - self.lots['Spirit']) % 360 if self.sect == 'Day' \
@@ -58,6 +79,9 @@ class Birthchart:
 		house2sign = SIGNKEY[swe.split_deg(self.houseCusps[1][0],8)[4]]
 		house2ruler = RULERS[house2sign]
 		self.lots['Assets'] = (asc + self.houseCusps[1][0] - self.planets[house2ruler][0][0]) % 360
+		self.lots['Death'] = (self.planets['Saturn'][0][0] + self.houseCusps[7][0] - self.planets['Moon'][0][0]) % 360
+		self.lots['Illness'] = (asc + self.planets['Mars'][0][0] - self.planets['Saturn'][0][0]) % 360 if self.sect == 'Day' \
+								else (asc + self.planets['Saturn'][0][0] - self.planets['Mars'][0][0]) % 360
 
 		for lot in self.lots:
 			split_deg = swe.split_deg(self.lots[lot],8)
@@ -68,7 +92,7 @@ class Birthchart:
 								'sign': SIGNKEY[split_deg[4]] }
 		
 
-	def calculateZR(self, lotname, maxage=100):
+	def calculateZR(self, lotname, maxage=100, valens_rule=True):
 		""" calculates all zodiacal releasing periods and subperiods (L1 = longest to L4 = shortest)
 			for a particular lot from birth to maxage """
 		if not self.lots:
@@ -76,6 +100,9 @@ class Birthchart:
 		enddt = self.birthTime + timedelta(days=365.25*maxage)
 		l1_start = self.birthTime
 		l1_sign = self.lots[lotname]['sign']
+		# Valens' rule that if Spirit & Fortune fall in the same sign, start releasing from Spirit from the following sign
+		if valens_rule and lotname == 'Spirit' and self.lots[lotname]['sign'] == self.lots['Fortune']['sign']:
+			l1_sign = SIGNKEY[(SIGNKEY.index(l1_sign)+1) % 12]
 		l1 = []
 		l2 = []
 		l3 = []
