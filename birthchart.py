@@ -3,7 +3,7 @@ from globalinit import *
 
 class Birthchart:
 
-	def __init__(self, name, dt, lat, lng, hsys='W', sidereal=True):
+	def __init__(self, name: str, dt: datetime, lat: float, lng: float, hsys='W', sidereal=True):
 		""" Birthchart constructor: name (string), datetime object (UT), latitude, longitude, 
 			house system for house cusps, sidereal mode (default) """
 		self.name = name
@@ -22,16 +22,18 @@ class Birthchart:
 
 
 	def calculateLots(self):
-		""" calculates various Dorothean lots plus others from Valens and Paulus """
+		""" Calculates Hellenistic lots. Sources: Carmen Astrologicum trans. Ben Dykes, Hellenistic Astrology by Chris Brennan """
 		asc = self.angles['Ascendant'][0]
 		self.lots = { 'Fortune': (asc + self.planets['Moon'][0][0] - self.planets['Sun'][0][0]) % 360 if self.sect == 'Day' \
 								else (asc + self.planets['Sun'][0][0] - self.planets['Moon'][0][0]) % 360,
 					'Spirit': (asc + self.planets['Sun'][0][0] - self.planets['Moon'][0][0]) % 360 if self.sect == 'Day' \
 								else (asc + self.planets['Moon'][0][0] - self.planets['Sun'][0][0]) % 360,
 
+					# Father: use alternate calculation (for either sect) if Saturn is under the beams
 					'Father': (asc + self.planets['Saturn'][0][0] - self.planets['Sun'][0][0]) % 360 if self.sect == 'Day' \
+								and abs(self.planets['Sun'][0][0] - self.planets['Saturn'][0][0]) > 15.0 \
+								else (asc + self.planets['Jupiter'][0][0] - self.planets['Mars'][0][0]) % 360 if abs(self.planets['Sun'][0][0] - self.planets['Saturn'][0][0]) <= 15.0 \
 								else (asc + self.planets['Sun'][0][0] - self.planets['Saturn'][0][0]) % 360,
-					'Father_alt': (asc + self.planets['Jupiter'][0][0] - self.planets['Mars'][0][0]) % 360,
 					'Mother': (asc + self.planets['Moon'][0][0] - self.planets['Venus'][0][0]) % 360 if self.sect == 'Day' \
 								else (asc + self.planets['Venus'][0][0] - self.planets['Moon'][0][0]) % 360,
 					'Siblings_Valens': (asc + self.planets['Jupiter'][0][0] - self.planets['Saturn'][0][0]) % 360 if self.sect == 'Day' \
@@ -52,24 +54,24 @@ class Birthchart:
 					'Wedding_M': (self.planets['Venus'][0][0] + self.planets['Moon'][0][0] - self.planets['Sun'][0][0]) % 360,
 					'Wedding_F': (self.planets['Mars'][0][0] + self.planets['Moon'][0][0] - self.planets['Sun'][0][0]) % 360,
 					
-					'Children_Paulus': (asc + self.planets['Saturn'][0][0] - self.planets['Jupiter'][0][0]) % 360,
+					'Children_Paulus': (asc + self.planets['Saturn'][0][0] - self.planets['Jupiter'][0][0]) % 360, # not reversed by night (Brennan)
 					'Children_Valens_M': (asc + self.planets['Mercury'][0][0] - self.planets['Jupiter'][0][0]) % 360,
 					'Children_Valens_F': (asc + self.planets['Venus'][0][0] - self.planets['Jupiter'][0][0]) % 360,
 
 					'Friendship': (asc + self.planets['Mercury'][0][0] - self.planets['Moon'][0][0]) % 360,
 					# Exaltation: from Sun to Aries = 0.0 - Sun; from Moon to Taurus = 30.0 - Moon
 					'Exaltation': (asc - self.planets['Sun'][0][0]) % 360 if self.sect == 'Day' \
-								else (asc + 30.0 - self.planets['Moon'][0][0])
+								else (asc + 30.0 - self.planets['Moon'][0][0]) % 360
 					 }
 		self.lots['Foundation'] = (asc + min(abs(self.lots['Spirit'] - self.lots['Fortune']), abs(self.lots['Fortune'] - self.lots['Spirit']))) % 360
-		self.lots['Eros_Valens'] = (asc + self.lots['Spirit'] - self.lots['Fortune']) % 360 if self.sect == 'Day' \
-							else (asc + self.lots['Fortune'] - self.lots['Spirit']) % 360
-		self.lots['Necessity_Valens'] = (asc + self.lots['Fortune'] - self.lots['Spirit']) % 360 if self.sect == 'Day' \
-							else (asc + self.lots['Spirit'] - self.lots['Fortune']) % 360
 		self.lots['Eros_Paulus'] = (asc + self.planets['Venus'][0][0] - self.lots['Spirit']) % 360 if self.sect == 'Day' \
 							else (asc + self.lots['Spirit'] - self.planets['Venus'][0][0]) % 360
+		self.lots['Eros_Valens'] = (asc + self.lots['Spirit'] - self.lots['Fortune']) % 360 if self.sect == 'Day' \
+							else (asc + self.lots['Fortune'] - self.lots['Spirit']) % 360
 		self.lots['Necessity_Paulus'] = (asc + self.lots['Fortune'] - self.planets['Mercury'][0][0]) % 360 if self.sect == 'Day' \
 							else (asc + self.planets['Mercury'][0][0] - self.lots['Fortune']) % 360
+		self.lots['Necessity_Valens'] = (asc + self.lots['Fortune'] - self.lots['Spirit']) % 360 if self.sect == 'Day' \
+							else (asc + self.lots['Spirit'] - self.lots['Fortune']) % 360
 		self.lots['Courage'] = (asc + self.lots['Fortune'] - self.planets['Mars'][0][0]) % 360 if self.sect == 'Day' \
 							else (asc + self.planets['Mars'][0][0] - self.lots['Fortune']) % 360
 		self.lots['Victory'] = (asc + self.planets['Jupiter'][0][0] - self.lots['Spirit']) % 360 if self.sect == 'Day' \
@@ -92,8 +94,8 @@ class Birthchart:
 								'sign': SIGNKEY[split_deg[4]] }
 		
 
-	def calculateZR(self, lotname, maxage=100, valens_rule=True):
-		""" calculates all zodiacal releasing periods and subperiods (L1 = longest to L4 = shortest)
+	def calculateZR(self, lotname: str, maxage=100, valens_rule=True):
+		""" Calculates all zodiacal releasing periods and subperiods (L1 = longest to L4 = shortest)
 			for a particular lot from birth to maxage """
 		if not self.lots:
 			self.calculateLots()
