@@ -1,0 +1,16 @@
+[[source]]
+url = "https://pypi.python.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+pyswisseph = "*"
+googlemaps = "*"
+matplotlib = "*"
+pyinstaller = "*"
+pymongo = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.7"
