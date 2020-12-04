@@ -4,7 +4,8 @@ Astrology calculations that use either the tropical or sidereal (Hindu-Lahiri ay
 Installation instructions:
 1. Read the Swiss Ephemeris license information: https://www.astro.com/swisseph/swephinfo_e.htm
 2. Download the latest Swiss Ephemeris source package: https://www.astro.com/ftp/swisseph/
-3. Install pyswisseph via pip or pipenv.
+3. If using pip, install ```pyswisseph==2.00.00-2```. To keep your pyswisseph installation separate for this project, install <a href="https://pipenv.pypa.io/en/latest/basics/#">Pipenv</a> and run ```pipenv install``` inside this project directory.
+<br /><i>This project is not yet compatible with pyswisseph version 2.08.00 and above.</i>
 4. Create a file called my_ephe_path.py in your SiderealAstroPy directory to define the following variable:
     ```
     EPHE_PATH = 'filepath/of/your/SwissEphemeris/src'
