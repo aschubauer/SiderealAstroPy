@@ -4,11 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-pyswisseph = "*"
-googlemaps = "*"
-matplotlib = "*"
-pyinstaller = "*"
-pymongo = "*"
+pyswisseph = "==2.00.00-2"
 
 [dev-packages]
 
