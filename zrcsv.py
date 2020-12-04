@@ -14,8 +14,13 @@ def getSavedProfiles():
         return []
 
 def saveProfilesBeforeClosing(list_of_birthcharts):
-    with open(SAVED_FILEPATH, 'wb') as pckfile:
-        pickle.dump(list_of_birthcharts, pckfile, pickle.HIGHEST_PROTOCOL)
+    try:
+        with open(SAVED_FILEPATH, 'wb') as pckfile:
+            pickle.dump(list_of_birthcharts, pckfile, pickle.HIGHEST_PROTOCOL)
+    except FileNotFoundError:
+        os.mkdir(OUTPUT_DIR)
+        with open(SAVED_FILEPATH, 'wb') as pckfile:
+            pickle.dump(list_of_birthcharts, pckfile, pickle.HIGHEST_PROTOCOL)
 
 def loadChart(native: Birthchart, sid: bool):
     if sid != native.sid:
